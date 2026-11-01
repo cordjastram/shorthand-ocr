@@ -1,0 +1,77 @@
+# =====================================================================
+# 1. Python & Virtuelle Umgebungen
+# =====================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+.venv/
+venv/
+env/
+ENV/
+
+# =====================================================================
+# 2. Trainierte Modellgewichte & Checkpoints (PyTorch / HTR)
+# =====================================================================
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.bin
+models/*.safetensors
+!models/.gitkeep
+
+# =====================================================================
+# 3. Generierte Datensätze, Scans & Vorverarbeitungs-Artefakte
+# =====================================================================
+# Synthetische Massendaten (tausende PNG-Zeilen und Seiten) ignorieren,
+# aber kleine Demo-Beispielseiten optional erlauben:
+data/synthetic/images/
+data/synthetic/pages/
+data/synthetic/test_run/
+data/synthetic/historical_pretraining/pages/
+data/synthetic/historical_pretraining/lines/
+data/synthetic/historical_pretraining/*.csv
+data/synthetic/historical_pretraining/*.json
+data/synthetic/historical_gabelsberger/
+data/synthetic/historical_stolze_schrey/
+data/synthetic/*.csv
+
+# Vorverarbeitete Zeilen-Crops und Debug-Bilder
+data/processed/
+data/raw_scans/*.tif
+data/raw_scans/*.tiff
+data/raw_scans/*.png
+data/raw_scans/*.jpg
+data/raw_scans/*.jpeg
+
+# =====================================================================
+# 4. Externe Referenzscans & Temporäre Logs
+# =====================================================================
+Extern/
+*.log
+runs/
+wandb/
+lightning_logs/
+
+# =====================================================================
+# 5. Betriebssystem & IDE (Windows / VS Code / JetBrains)
+# =====================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+.DS_Store
+
