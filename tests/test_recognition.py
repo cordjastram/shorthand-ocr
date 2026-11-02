@@ -92,6 +92,17 @@ class TestDekRecognition(unittest.TestCase):
             corrector.correct_sentence("die Militäregierung an nicht dlden daß der wiederaufba der zerstörten brckn"),
             "die Militärregierung an nicht dulden daß der wiederaufbau der zerstörten brücken",
         )
+        # Trie-Präfix und Bigramm-Score prüfen
+        self.assertTrue(corrector.is_valid_prefix("wiederauf"))
+        self.assertFalse(corrector.is_valid_prefix("xyzqwert"))
+        score_known = corrector.get_word_transition_score("der", "wiederaufbau")
+        score_unknown = corrector.get_word_transition_score("der", "xyzwort")
+        self.assertGreater(score_known, score_unknown)
+
+        # Shallow-Fusion Beam-Search mit Blank-Penalty und Temperatur testen
+        decoder = CtcBeamSearchDecoder(self.vocab, beam_width=6, use_lexicon=True)
+        decoded_str = decoder.decode_log_probs(log_probs[:, 0, :], apply_lexicon=True)
+        self.assertIsInstance(decoded_str, str)
 
 
 if __name__ == "__main__":

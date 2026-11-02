@@ -116,10 +116,14 @@ def train(
             model.load_state_dict(ckpt["model_state_dict"])
             if "optimizer_state_dict" in ckpt:
                 optimizer.load_state_dict(ckpt["optimizer_state_dict"])
-            if "scheduler_state_dict" in ckpt:
-                scheduler.load_state_dict(ckpt["scheduler_state_dict"])
             start_epoch = ckpt.get("epoch", 0) + 1
             best_val_loss = ckpt.get("val_loss", float("inf"))
+            # Scheduler auf die Ziel-Epochenzahl synchronisieren
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=max(start_epoch, epochs), eta_min=lr * 0.03
+            )
+            for _ in range(1, start_epoch):
+                scheduler.step()
             print(f"  -> Setze Training ab Epoche {start_epoch:02d}/{epochs:02d} fort (bisheriger Best Val Loss: {best_val_loss:.4f})")
         else:
             print(f"\nHinweis: Checkpoint {best_model_file} hat Architektur '{ckpt_arch}' statt '{arch}'. Starte neues Training ab Epoche 1.")
@@ -154,6 +158,14 @@ def train(
 
         scheduler.step()
         avg_train_loss = train_loss / max(1, len(train_loader))
+
+        # 5b. Windows-Standby-Schutz pro Epoche erneuern
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)
+            except Exception:
+                pass
 
         # 6. Validierung
         model.eval()

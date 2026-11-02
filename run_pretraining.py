@@ -15,12 +15,31 @@ Workflow je System:
 
 import sys
 import time
+import ctypes
 import argparse
 from pathlib import Path
 
 # UTF-8 auf Windows-Konsole sicherstellen
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
+# Windows-Standby-Schutz Konstanten
+ES_CONTINUOUS = 0x80000000
+ES_SYSTEM_REQUIRED = 0x00000001
+
+
+def set_windows_keep_awake(enable: bool = True):
+    """Verhindert, dass Windows während des GPU-Trainings in den Standby-Modus wechselt."""
+    if sys.platform == "win32":
+        try:
+            if enable:
+                ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
+                print("[System] Windows-Standby-Schutz aktiviert (ES_CONTINUOUS | ES_SYSTEM_REQUIRED).")
+            else:
+                ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS)
+                print("[System] Windows-Standby-Schutz wieder freigegeben.")
+        except Exception as e:
+            print(f"[Warnung] Konnte SetThreadExecutionState nicht setzen: {e}")
 
 project_root = Path(__file__).resolve().parent
 sys.path.insert(0, str(project_root))
@@ -140,18 +159,26 @@ def main():
     )
     parser.add_argument("--height", type=int, default=96, help="Ziel-Zeilenhöhe in Pixeln (Standard: 96)")
     parser.add_argument("--pages", type=int, default=500, help="Anzahl zu generierender Seiten pro System")
-    parser.add_argument("--epochs", type=int, default=25, help="Anzahl der Trainings-Epochen")
+    parser.add_argument("--epochs", type=int, default=12, help="Anzahl der Trainings-Epochen (Standard: 12)")
     args = parser.parse_args()
 
     systems_to_run = ["dek", "gabelsberger", "stolze_schrey"] if args.system == "all" else [args.system]
-    for sys_name in systems_to_run:
-        run_for_system(
-            sys_name,
-            num_pages=args.pages,
-            epochs=args.epochs,
-            arch=args.arch,
-            target_height=args.height,
-        )
+    set_windows_keep_awake(True)
+    try:
+        for sys_name in systems_to_run:
+            target_epochs = args.epochs
+            # Falls Stolze-Schrey bereits bei Epoche 23 steht, automatisch bis Epoche 28 nachtrainieren
+            if sys_name == "stolze_schrey" and target_epochs < 28:
+                target_epochs = 28
+            run_for_system(
+                sys_name,
+                num_pages=args.pages,
+                epochs=target_epochs,
+                arch=args.arch,
+                target_height=args.height,
+            )
+    finally:
+        set_windows_keep_awake(False)
 
 
 if __name__ == "__main__":
